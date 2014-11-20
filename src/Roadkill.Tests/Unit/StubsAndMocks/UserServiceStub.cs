@@ -85,7 +85,12 @@ namespace Roadkill.Tests
 			throw new NotImplementedException();
 		}
 
-		public override IEnumerable<UserViewModel> ListAdmins()
+	    public override bool HaveAccess(string cookieValue, string @group)
+	    {
+	        throw new NotImplementedException();
+	    }
+
+	    public override IEnumerable<UserViewModel> ListAdmins()
 		{
 			throw new NotImplementedException();
 		}

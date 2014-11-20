@@ -129,5 +129,12 @@ namespace Roadkill.Core.Services
 		/// </summary>
 		/// <exception cref="DatabaseException">A datastore error occurred while clearing the page data.</exception>
 		void ClearPageTables();
+
+	    /// <summary>
+	    /// Retrieves a list of all teams in the system.
+	    /// </summary>
+	    /// <returns>A <see cref="IEnumerable{TagViewModel}"/> for the tags.</returns>
+	    /// <exception cref="DatabaseException">An databaseerror occurred while getting the tags.</exception>
+	    IEnumerable<TagViewModel> AllTeams();
 	}
 }

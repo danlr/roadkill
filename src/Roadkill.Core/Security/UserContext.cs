@@ -119,5 +119,10 @@ namespace Roadkill.Core.Security
 				return !string.IsNullOrWhiteSpace(CurrentUser);
 			}
 		}
+
+	    public bool HasAccess(string team)
+	    {
+	        return IsAdmin || _userService.HaveAccess(CurrentUser, team);
+	    }
 	}
 }

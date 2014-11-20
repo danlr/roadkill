@@ -145,7 +145,12 @@ namespace Roadkill.Tests
 			return Users.Any(x => x.Id == id && x.IsEditor);
 		}
 
-		public override IEnumerable<UserViewModel> ListAdmins()
+	    public override bool HaveAccess(string cookieValue, string group)
+	    {
+	        return true;
+	    }
+
+	    public override IEnumerable<UserViewModel> ListAdmins()
 		{
 			return Users.Where(x => x.IsAdmin).Select(x => new UserViewModel(x));
 		}

@@ -49,13 +49,17 @@ namespace Roadkill.Core.Mvc.Controllers
 
 		public ActionResult PageToolbar(int? id)
 		{
-			if (id == null || id < 1)
-				return Content("");
+		    if (id == null || id < 1)
+		    {
+		        return Content("");
+		    }
 
 			PageViewModel model = PageService.GetById(id.Value);
 
-			if (model == null)
-				return Content(string.Format("The page with id '{0}' could not be found", id));
+		    if (model == null)
+		    {
+		        return Content(string.Format("The page with id '{0}' could not be found", id));
+		    }
 
 			return PartialView(model);
 		}

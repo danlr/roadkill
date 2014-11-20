@@ -24,6 +24,9 @@ namespace Roadkill.Core.Database.LightSpeed
 		[Column("tags")]
 		private string _tags;
 
+        [Column("teams")]
+		private string _teams;
+
 		[Column("islocked")]
 		private bool _isLocked;
 
@@ -104,6 +107,18 @@ namespace Roadkill.Core.Database.LightSpeed
 			set
 			{
 				Set<string>(ref _tags, value);
+			}
+		}
+
+        public string Teams
+		{
+			get
+			{
+				return _teams;
+			}
+			set
+			{
+				Set<string>(ref _teams, value);
 			}
 		}
 

@@ -6,8 +6,10 @@
 <script type="text/javascript">
 	$(document).ready(function ()
 	{
+	    var pageTeams = [ @(Html.Raw(Model.JavascriptArrayForAllTeams()))];
+
 		var pageTags = [ @(Html.Raw(Model.JavascriptArrayForAllTags())) ];
-		var editPage = new Roadkill.Web.EditPage(pageTags);
+		var editPage = new Roadkill.Web.EditPage(pageTags, pageTeams);
 	});
 </script>
 <style>
@@ -19,29 +21,34 @@
 		@Html.BootstrapValidationSummary(SiteStrings.EditPage_Error)
 
 		<form class="form-horizontal" role="form" method="post" id="editpage-form">
-			@(Html.HiddenFor<PageViewModel, int>(p => p.Id))
-			@(Html.HiddenFor<PageViewModel, string>(p => p.PreviousTitle))
-			@(Html.HiddenFor<PageViewModel, string>(p => p.RawTags))
+			@(Html.HiddenFor(p => p.Id))
+			@(Html.HiddenFor(p => p.PreviousTitle))
+			@(Html.HiddenFor(p => p.RawTags))
+			@(Html.HiddenFor(p => p.RawTeams))
 
 			<div class="form-group">
 				<div class="col-sm-12">
-					@(Html.BootstrapTextBoxFor<PageViewModel, string>(p => p.Title, SiteStrings.EditPage_Title_Label, false, 1))
+					@(Html.BootstrapTextBoxFor(p => p.Title, SiteStrings.EditPage_Title_Label, false, 1))
 				</div>
 			</div>
 
-			<div class="form-inline">
+		    <div class="form-inline">
 				@(Html.TextBox("TagsEntry", null, new { @class = "form-control tm-input", autocomplete = "off", tabindex = 2, placeholder = SiteStrings.EditPage_Tags_Label }))
 			</div>
-
-
-			@if (RoadkillContext.IsAdmin)
-			{
-				<div class="form-inline">
-					<h6>
-						@(Html.BootstrapCheckBoxFor<PageViewModel>(p => p.IsLocked, SiteStrings.EditPage_AdminOnly, 3))
-						@SiteStrings.EditPage_AdminOnly
-					</h6>
-				</div>
+		    
+            @if (RoadkillContext.IsAdmin)
+            {
+                <hr />
+                <div class="form-inline">
+                    @(Html.TextBox("TeamsEntry", null, new {@class = "form-control tm-input", autocomplete = "off", tabindex = 2, placeholder = "Allowed teams"}))
+                </div>
+                <hr />
+			    <div class="form-inline">
+			        <h6>
+			            @(Html.BootstrapCheckBoxFor(p => p.IsLocked, SiteStrings.EditPage_AdminOnly, 3))
+			            @SiteStrings.EditPage_AdminOnly
+			        </h6>
+			    </div>
 			}
 
 			@Html.Partial("WysiwgToolbar")

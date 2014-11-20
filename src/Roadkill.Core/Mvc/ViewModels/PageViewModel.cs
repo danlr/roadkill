@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.ComponentModel.DataAnnotations;
 using Roadkill.Core.Localization;
 using Roadkill.Core.Database;
@@ -16,15 +15,18 @@ namespace Roadkill.Core.Mvc.ViewModels
 	/// Provides summary data for a page.
 	/// </summary>
 	[CustomValidation(typeof(PageViewModel), "VerifyRawTags")]
+	[CustomValidation(typeof(PageViewModel), "VerifyRawTeams")]
 	public class PageViewModel
 	{
-		private static string[] _tagBlackList = 
+		private static readonly string[] TagBlackList = 
 		{
 			"#", ";", "/", "?", ":", "@", "&", "=", "{", "}", "|", "\\", "^", "[", "]", "`"		
 		};
 
 		private List<string> _tags;
+		private List<string> _teams;
 		private string _rawTags;
+		private string _rawTeams;
 		private string _content;
 
 		/// <summary>
@@ -42,8 +44,10 @@ namespace Roadkill.Core.Mvc.ViewModels
 			{
 				// Ensure the content isn't null for lucene's benefit
 				_content = value;
-				if (_content == null)
-					_content = "";
+			    if (_content == null)
+			    {
+			        _content = "";
+			    }
 			}
 		}
 
@@ -104,6 +108,14 @@ namespace Roadkill.Core.Mvc.ViewModels
 		{
 			get { return _tags; }
 		}
+        
+        /// <summary>
+		/// Gets the teams for the page as a list.
+		/// </summary>
+		public IEnumerable<string> Teams
+		{
+            get { return _teams; }
+		}
 
 		/// <summary>
 		/// Sets or gets the tags for the page - these should be in comma separated format.
@@ -118,6 +130,22 @@ namespace Roadkill.Core.Mvc.ViewModels
 			{
 				_rawTags = value;
 				ParseRawTags();
+			}
+		}
+
+		/// <summary>
+		/// Sets or gets the tags for the page - these should be in comma separated format.
+		/// </summary>
+		public string RawTeams
+		{
+			get 
+			{ 
+				return _rawTeams; 
+			}
+			set
+			{
+				_rawTeams = value;
+				ParseRawTeams();
 			}
 		}
 
@@ -139,7 +167,7 @@ namespace Roadkill.Core.Mvc.ViewModels
 		{
 			get
 			{
-				return PageViewModel.EncodePageTitle(Title);
+				return EncodePageTitle(Title);
 			}
 		}
 		
@@ -185,21 +213,28 @@ namespace Roadkill.Core.Mvc.ViewModels
 		[XmlIgnore]
 		public List<TagViewModel> AllTags { get; set; }
 
+        [XmlIgnore]
+		public List<TagViewModel> AllTeams { get; set; }
+
 		public PageViewModel()
 		{
 			_tags = new List<string>();
+			_teams = new List<string>();
 			IsCacheable = true;
 			PluginHeadHtml = "";
 			PluginFooterHtml = "";
 			PluginPreContainer = "";
 			PluginPostContainer = "";
 			AllTags = new List<TagViewModel>();
+            AllTeams = new List<TagViewModel>();
 		}
 
 		public PageViewModel(Page page)
 		{
-			if (page == null)
-				throw new ArgumentNullException("page");
+		    if (page == null)
+		    {
+		        throw new ArgumentNullException("page");
+		    }
 
 			Id = page.Id;
 			Title = page.Title;
@@ -210,22 +245,30 @@ namespace Roadkill.Core.Mvc.ViewModels
 			ModifiedBy = page.ModifiedBy;
 			ModifiedOn = page.ModifiedOn;
 			RawTags = page.Tags;
+			RawTeams = page.Teams;
 
 			CreatedOn = DateTime.SpecifyKind(CreatedOn, DateTimeKind.Utc);
 			ModifiedOn = DateTime.SpecifyKind(ModifiedOn, DateTimeKind.Utc);
 			AllTags = new List<TagViewModel>();
+            AllTeams = new List<TagViewModel>();
 		}
 
 		public PageViewModel(PageContent pageContent, MarkupConverter converter)
 		{
-			if (pageContent == null)
-				throw new ArgumentNullException("pageContent");
+		    if (pageContent == null)
+		    {
+		        throw new ArgumentNullException("pageContent");
+		    }
 
-			if (pageContent.Page == null)
-				throw new ArgumentNullException("pageContent.Page");
+		    if (pageContent.Page == null)
+		    {
+		        throw new ArgumentNullException("pageContent.Page");
+		    }
 
-			if (converter == null)
-				throw new ArgumentNullException("converter");
+		    if (converter == null)
+		    {
+		        throw new ArgumentNullException("converter");
+		    }
 
 			Id = pageContent.Page.Id;
 			Title = pageContent.Page.Title;
@@ -236,6 +279,7 @@ namespace Roadkill.Core.Mvc.ViewModels
 			ModifiedBy = pageContent.Page.ModifiedBy;
 			ModifiedOn = pageContent.Page.ModifiedOn;
 			RawTags = pageContent.Page.Tags;
+			RawTeams = pageContent.Page.Teams;
 			Content = pageContent.Text;
 			VersionNumber = pageContent.VersionNumber;
 
@@ -250,6 +294,7 @@ namespace Roadkill.Core.Mvc.ViewModels
 			CreatedOn = DateTime.SpecifyKind(CreatedOn, DateTimeKind.Utc);
 			ModifiedOn = DateTime.SpecifyKind(ModifiedOn, DateTimeKind.Utc);
 			AllTags = new List<TagViewModel>();
+            AllTeams = new List<TagViewModel>();
 		}
 
 		/// <summary>
@@ -258,6 +303,14 @@ namespace Roadkill.Core.Mvc.ViewModels
 		public string CommaDelimitedTags()
 		{
 			return string.Join(",", _tags);
+		}
+
+        /// <summary>
+		/// Joins the parsed teams with a comma.
+		/// </summary>
+		public string CommaDelimitedTeams()
+		{
+			return string.Join(",", _teams);
 		}
 
 		/// <summary>
@@ -269,6 +322,12 @@ namespace Roadkill.Core.Mvc.ViewModels
 			return "\"" +string.Join("\", \"", allTags) + "\"";
 		}
 
+        public string JavascriptArrayForAllTeams()
+		{
+            IEnumerable<string> allTags = AllTeams.OrderBy(x => x.Name).Select(t => t.Name);
+			return "\"" +string.Join("\", \"", allTags) + "\"";
+		}
+
 		/// <summary>
 		/// Joins the tags with a space.
 		/// </summary>
@@ -277,9 +336,22 @@ namespace Roadkill.Core.Mvc.ViewModels
 			return string.Join(" ", _tags);
 		}
 
+        /// <summary>
+		/// Joins the teams with a space.
+		/// </summary>
+		public string SpaceDelimitedTeams()
+		{
+			return string.Join(" ", _teams);
+		}
+
 		private void ParseRawTags()
 		{
 			_tags = ParseTags(_rawTags).ToList();
+		}
+
+        private void ParseRawTeams()
+		{
+			_teams = ParseTags(_rawTeams).ToList();
 		}
 
 		/// <summary>
@@ -289,44 +361,68 @@ namespace Roadkill.Core.Mvc.ViewModels
 		/// <returns></returns>
 		public static IEnumerable<string> ParseTags(string tags)
 		{
-			List<string> tagList = new List<string>();
+			var tagList = new List<string>();
 			char delimiter = ',';
 
-			if (!string.IsNullOrEmpty(tags))
-			{
-				// For the legacy tag seperator format
-				if (tags.IndexOf(";") != -1)
-					delimiter = ';';
+		    if (string.IsNullOrEmpty(tags))
+		    {
+		        return tagList;
+		    }
 
-				if (tags.IndexOf(delimiter) != -1)
-				{
-					string[] parts = tags.Split(delimiter);
-					foreach (string item in parts)
-					{
-						if (item != "," && !string.IsNullOrWhiteSpace(item))
-							tagList.Add(item.Trim());
-					}
-				}
-				else
-				{
-					tagList.Add(tags.TrimEnd());
-				}
-			}
+		    // For the legacy tag seperator format
+		    if (tags.IndexOf(";") != -1)
+		    {
+		        delimiter = ';';
+		    }
 
-			return tagList;
+		    if (tags.IndexOf(delimiter) != -1)
+		    {
+		        string[] parts = tags.Split(delimiter);
+		        foreach (string item in parts)
+		        {
+		            if (item != "," && !string.IsNullOrWhiteSpace(item))
+		            {
+		                tagList.Add(item.Trim());
+		            }
+		        }
+		    }
+		    else
+		    {
+		        tagList.Add(tags.TrimEnd());
+		    }
+
+		    return tagList;
 		}
 
 		/// <summary>
 		/// Returns false if the tag contains ; / ? : @ & = { } | \ ^ [ ] `		
 		/// </summary>
-		/// <param name="tag">The tag</param>
-		/// <returns></returns>
 		public static ValidationResult VerifyRawTags(PageViewModel pageViewModel, ValidationContext context)
 		{
 			if (string.IsNullOrEmpty(pageViewModel.RawTags))
 				return ValidationResult.Success;
 
-			if (_tagBlackList.Any(x => pageViewModel.RawTags.Contains(x)))
+			if (TagBlackList.Any(x => pageViewModel.RawTags.Contains(x)))
+			{
+				return new ValidationResult("Invalid characters in tag"); // doesn't need to be localized as there's a javascript check
+			}
+			else
+			{
+				return ValidationResult.Success;
+			}
+		}
+
+		/// <summary>
+		/// Returns false if the tag contains ; / ? : @ & = { } | \ ^ [ ] `		
+		/// </summary>
+		public static ValidationResult VerifyRawTeams(PageViewModel pageViewModel, ValidationContext context)
+		{
+		    if (string.IsNullOrEmpty(pageViewModel.RawTeams))
+		    {
+		        return ValidationResult.Success;
+		    }
+
+            if (TagBlackList.Any(x => pageViewModel.RawTeams.Contains(x)))
 			{
 				return new ValidationResult("Invalid characters in tag"); // doesn't need to be localized as there's a javascript check
 			}
@@ -342,8 +438,10 @@ namespace Roadkill.Core.Mvc.ViewModels
 		/// </summary>
 		public static string EncodePageTitle(string title)
 		{
-			if (string.IsNullOrEmpty(title))
-				return title;
+		    if (string.IsNullOrEmpty(title))
+		    {
+		        return title;
+		    }
 
 			// Search engine friendly slug routine with help from http://www.intrepidstudios.com/blog/2009/2/10/function-to-generate-a-url-friendly-string.aspx
 

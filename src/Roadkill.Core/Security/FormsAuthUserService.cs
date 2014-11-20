@@ -308,7 +308,6 @@ namespace Roadkill.Core.Security
 				{
 					Logout();
 					return false;
-					throw new SecurityException("The user's cookie value does not contain a Guid when checking for editor rights.", null);
 				}
 			}
 			catch (DatabaseException ex)
@@ -317,7 +316,12 @@ namespace Roadkill.Core.Security
 			}
 		}
 
-		/// <summary>
+	    public override bool HaveAccess(string cookieValue, string group)
+	    {
+	        return true;
+	    }
+
+	    /// <summary>
 		/// Lists all admins in the system.
 		/// </summary>
 		/// <returns>

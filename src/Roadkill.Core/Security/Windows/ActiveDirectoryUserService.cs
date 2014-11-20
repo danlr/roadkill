@@ -179,7 +179,29 @@ namespace Roadkill.Core.Security.Windows
 			}
 		}
 
-		/// <summary>
+        public override bool HaveAccess(string user, string group)
+	    {
+            try
+            {
+                var users = GetUsersInGroup(group);
+                return users.Contains(CleanUsername(user));
+            }
+            catch (SecurityException se)// meansNoSuchGroupInActiveDirectory)
+            {
+                if (se.InnerException != null && se.InnerException.GetType() == typeof (InvalidOperationException))
+                {
+                    return true;
+                }
+
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new SecurityException(ex, "An error occurred querying HaveAccess with Active Directory");
+            }
+	    }
+
+	    /// <summary>
 		/// Lists all admins in the system.
 		/// </summary>
 		/// <returns>

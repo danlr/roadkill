@@ -9,10 +9,11 @@ module Roadkill.Web
 			"#", ",", ";", "/", "?", ":", "@", "&", "=", "{", "}", "|", "\\", "^", "[", "]", "`"	
 		];
 
-		constructor(tags : string[])
+        constructor(tags: string[], teams: string[])
 		{
 			// Setup tagmanager
-			this.initializeTagManager(tags);
+            this.initializeTagManager(tags, "TagsEntry", "RawTags");
+            this.initializeTagManager(teams, "TeamsEntry", "RawTeams");
 
 			// Bind all the button events
 			var editor = new WysiwygEditor();
@@ -41,19 +42,19 @@ module Roadkill.Web
 		/**
 		Sets up the Bootstrap tag manager
 		*/
-		private initializeTagManager(tags: string[])
+		private initializeTagManager(tags: string[], id:string, outputId : string)
 		{
 			// Use jQuery UI autocomplete, as typeahead is currently broken for BS3
-			$("#TagsEntry").autocomplete({
+			$("#" + id).autocomplete({
 				source: tags
 			});
 
-			$("#TagsEntry").tagsManager({
+            $("#" + id).tagsManager({
 				tagClass: "tm-tag-success",
 				blinkBGColor_1: "#FFFF9C",
 				blinkBGColor_2: "#CDE69C",
 				delimeters: [44, 186, 32, 9], // comma, ";", space, tab
-				output: "#RawTags",
+                output: "#" + outputId,
 				preventSubmitOnEnter: false,
 				validator: (input: string) =>
 				{
@@ -67,13 +68,13 @@ module Roadkill.Web
 				}
 			});
 
-			$("#TagsEntry").keydown((e) =>
+            $("#" + id).keydown((e) =>
 			{
 				// Tab adds the tag, but then focuses the toolbar (the next tab index)
 				var code = e.keyCode || e.which;
 				if (code == "9")
 				{
-					var tag: string = $("#TagsEntry").val();
+                    var tag: string = $("#" + id).val();
 					if (this.isValidTag(tag))
 					{
 						if ($("#IsLocked").length == 0)
@@ -87,10 +88,10 @@ module Roadkill.Web
 				return true;
 			});
 
-			$("#TagsEntry").blur(function (e)
+            $("#" + id).blur(function (e)
 			{
 				// Push the tag when focus is lost, e.g. Save is pressed
-				$("#TagsEntry").tagsManager("pushTag", $("#TagsEntry").val());
+                $("#" + id).tagsManager("pushTag", $("#TagsEntry").val());
 
 				// Fix the tag's styles from being blank
 				$(".tm-tag-remove").each(function ()

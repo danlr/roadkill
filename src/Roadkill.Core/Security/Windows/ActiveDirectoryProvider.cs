@@ -30,8 +30,10 @@ namespace Roadkill.Core.Security.Windows
 					using (GroupPrincipal group = GroupPrincipal.FindByIdentity(context, IdentityType.SamAccountName, groupName))
 					{
 						// FindByIdentity returns null if no matches were found
-						if (group == null)
-							throw new InvalidOperationException(string.Format("The group {0} could not be found", groupName));
+					    if (group == null)
+					    {
+					        throw new InvalidOperationException(string.Format("The group {0} could not be found", groupName));
+					    }
 
                         // Add all of the members of this group, and any sub-group to the list of members.
                         AddGroupMembers(group, results);

@@ -68,6 +68,11 @@ namespace Roadkill.Core.Database
 		/// Gets or sets the tags for the page, in the format "tag1,tag2,tag3" (no spaces between tags).
 		/// </summary>
 		public string Tags { get; set; }
+        
+        /// <summary>
+		/// Gets or sets the teams for the page, in the format "team1,team2,team3" (no spaces between teams).
+		/// </summary>
+		public string Teams { get; set; }
 
 		/// <summary>
 		/// Gets or sets whether the page is locked for admin-only editing.

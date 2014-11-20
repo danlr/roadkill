@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Roadkill.Core.Mvc.ViewModels;
 
 namespace Roadkill.Core
@@ -33,5 +34,11 @@ namespace Roadkill.Core
 		/// Gets whether the request is for a logged in user.
 		/// </summary>
 		bool IsLoggedIn { get; }
+
+        /// <summary>
+        /// Gets whether the user (if logged in), has access to the team
+        /// </summary>
+        /// <param name="team"></param>
+        bool HasAccess(string team);
 	}
 }

@@ -11,6 +11,7 @@ using Roadkill.Core.Mvc.ViewModels;
 using Roadkill.Core.Configuration;
 using System.Web;
 using Roadkill.Core.Logging;
+using Roadkill.Core.Security;
 using Roadkill.Core.Text;
 using Roadkill.Core.Plugins;
 
@@ -63,6 +64,7 @@ namespace Roadkill.Core.Services
 				Page page = new Page();
 				page.Title = model.Title;
 				page.Tags = model.CommaDelimitedTags();
+				page.Teams = model.CommaDelimitedTeams();
 				page.CreatedBy = AppendIpForDemoSite(currentUser);
 				page.CreatedOn = DateTime.UtcNow;
 				page.ModifiedOn = DateTime.UtcNow;
@@ -224,6 +226,56 @@ namespace Roadkill.Core.Services
 			}
 		}
 
+
+		/// <summary>
+		/// Retrieves a list of all teams in the system.
+		/// </summary>
+		/// <returns>A <see cref="IEnumerable{TagViewModel}"/> for the tags.</returns>
+		/// <exception cref="DatabaseException">An databaseerror occurred while getting the tags.</exception>
+		public IEnumerable<TagViewModel> AllTeams()
+		{
+			try
+			{
+				string cacheKey = "allteams";
+
+				List<TagViewModel> teams = _listCache.Get<TagViewModel>(cacheKey);
+				if (teams == null)
+				{
+					IEnumerable<string> tagList = Repository.AllTags(); //todo: AllTeams
+					teams = new List<TagViewModel>();
+
+					foreach (string item in tagList)
+					{
+						foreach (string team in PageViewModel.ParseTags(item))
+						{
+							if (!string.IsNullOrEmpty(team))
+							{
+								TagViewModel tagModel = new TagViewModel(team);
+								int index = teams.IndexOf(tagModel);
+
+								if (index < 0)
+								{
+									teams.Add(tagModel);
+								}
+								else
+								{
+									teams[index].Count++;
+								}
+							}
+						}
+					}
+
+					_listCache.Add(cacheKey, teams);
+				}
+
+				return teams;
+			}
+			catch (DatabaseException ex)
+			{
+				throw new DatabaseException(ex, "An error occurred while retrieving all teams from the database");
+			}
+		}
+
 		/// <summary>
 		/// Deletes a page from the database.
 		/// </summary>
@@ -345,7 +397,7 @@ namespace Roadkill.Core.Services
 					models = from page in pages
 								select new PageViewModel(Repository.GetLatestPageContent(page.Id), _markupConverter);
 
-					_listCache.Add<PageViewModel>(cacheKey, models);
+					_listCache.Add(cacheKey, models);
 				}
 
 				return models;
@@ -366,15 +418,29 @@ namespace Roadkill.Core.Services
 		{
 			try
 			{
-				if (string.IsNullOrEmpty(title))
-					return null;
+			    if (string.IsNullOrEmpty(title))
+			    {
+			        return null;
+			    }
 
 				Page page = Repository.GetPageByTitle(title);
 
-				if (page == null)
-					return null;
-				else
-					return new PageViewModel(Repository.GetLatestPageContent(page.Id), _markupConverter);
+			    if (page == null)
+			    {
+			        return null;
+			    }
+
+
+			    List<string> teams = string.IsNullOrEmpty(page.Teams) ? 
+			        new List<string>() : 
+			        page.Teams.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
+
+			    if (_context.IsLoggedIn && teams.Any() && !teams.Any(t => _context.HasAccess(t)))
+			    {
+			        return null;
+			    }
+
+			    return new PageViewModel(Repository.GetLatestPageContent(page.Id), _markupConverter);
 			}
 			catch (DatabaseException ex)
 			{
@@ -397,38 +463,43 @@ namespace Roadkill.Core.Services
 				{
 					return pageModel;
 				}
-				else
-				{
-					Page page = Repository.GetPageById(id);
 
-					if (page == null)
-					{
-						return null;
-					}
-					else
-					{
-						// If object caching is enabled, ignore the "loadcontent" parameter as the cache will be 
-						// used on the second call anyway, so performance isn't an issue.
-						if (ApplicationSettings.UseObjectCache)
-						{
-							pageModel = new PageViewModel(Repository.GetLatestPageContent(page.Id), _markupConverter);
-						}
-						else
-						{
-							if (loadContent)
-							{
-								pageModel = new PageViewModel(Repository.GetLatestPageContent(page.Id), _markupConverter);
-							}
-							else
-							{
-								pageModel = new PageViewModel(page);
-							}
-						}
+			    Page page = Repository.GetPageById(id);
 
-						_pageViewModelCache.Add(id, pageModel);
-						return pageModel;
-					}
-				}
+			    if (page == null)
+			    {
+			        return null;
+			    }
+
+			    List<string> teams = string.IsNullOrEmpty(page.Teams) ?
+			        new List<string>() :
+			        page.Teams.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
+
+			    if (_context.IsLoggedIn && teams.Any() && !teams.Any(t => _context.HasAccess(t)))
+			    {
+			        return null;
+			    }
+
+			    // If object caching is enabled, ignore the "loadcontent" parameter as the cache will be 
+			    // used on the second call anyway, so performance isn't an issue.
+			    if (ApplicationSettings.UseObjectCache)
+			    {
+			        pageModel = new PageViewModel(Repository.GetLatestPageContent(page.Id), _markupConverter);
+			    }
+			    else
+			    {
+			        if (loadContent)
+			        {
+			            pageModel = new PageViewModel(Repository.GetLatestPageContent(page.Id), _markupConverter);
+			        }
+			        else
+			        {
+			            pageModel = new PageViewModel(page);
+			        }
+			    }
+
+			    _pageViewModelCache.Add(id, pageModel);
+			    return pageModel;
 			}
 			catch (DatabaseException ex)
 			{
@@ -451,6 +522,7 @@ namespace Roadkill.Core.Services
 				Page page = Repository.GetPageById(model.Id);
 				page.Title = model.Title;
 				page.Tags = model.CommaDelimitedTags();
+				page.Teams = model.CommaDelimitedTeams();
 				page.ModifiedOn = DateTime.UtcNow;
 				page.ModifiedBy = AppendIpForDemoSite(currentUser);
 
@@ -481,7 +553,7 @@ namespace Roadkill.Core.Services
 				}
 
 				// Update the lucene index
-				PageViewModel updatedModel = new PageViewModel(Repository.GetLatestPageContent(page.Id), _markupConverter);
+				var updatedModel = new PageViewModel(Repository.GetLatestPageContent(page.Id), _markupConverter);
 				_searchService.Update(updatedModel);
 			}
 			catch (DatabaseException ex)
@@ -560,8 +632,10 @@ namespace Roadkill.Core.Services
 				if (!_context.IsAdmin)
 				{
 					string ip = HttpContext.Current.Request.ServerVariables["HTTP_X_FORWARDED_FOR"];
-					if (string.IsNullOrEmpty(ip))
-						ip = HttpContext.Current.Request.ServerVariables["REMOTE_ADDR"];
+				    if (string.IsNullOrEmpty(ip))
+				    {
+				        ip = HttpContext.Current.Request.ServerVariables["REMOTE_ADDR"];
+				    }
 
 					result = string.Format("{0} ({1})", username, ip);
 				}

@@ -15,6 +15,11 @@ namespace Roadkill.Tests.Unit
 		public bool IsContentPage { get; set; }
 		public bool IsEditor { get; set; }
 		public bool IsLoggedIn { get; set; }
-		public PageViewModel Page { get; set; }
+	    public bool HasAccess(string team)
+	    {
+	        return true;
+	    }
+
+	    public PageViewModel Page { get; set; }
 	}
 }

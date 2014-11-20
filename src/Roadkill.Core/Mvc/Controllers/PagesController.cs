@@ -123,10 +123,13 @@ namespace Roadkill.Core.Mvc.Controllers
 
 			if (model != null)
 			{
-				if (model.IsLocked && !Context.IsAdmin)
-					return new HttpStatusCodeResult(403, string.Format("The page '{0}' can only be edited by administrators.", model.Title));
+			    if (model.IsLocked && !Context.IsAdmin)
+			    {
+			        return new HttpStatusCodeResult(403, string.Format("The page '{0}' can only be edited by administrators.", model.Title));
+			    }
 
 				model.AllTags = _pageService.AllTags().ToList();
+				model.AllTeams = _pageService.AllTeams().ToList();
 
 				return View("Edit", model);
 			}
