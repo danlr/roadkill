@@ -17,6 +17,7 @@ namespace Roadkill.Core.Database
 		IEnumerable<Page> AllPages();
 		IEnumerable<PageContent> AllPageContents();
 		IEnumerable<string> AllTags();
+		IEnumerable<string> AllTeams();
 		void DeletePage(Page page);
 		/// <summary>
 		/// Removes a single version of page contents by its id.

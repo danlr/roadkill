@@ -236,7 +236,12 @@ namespace Roadkill.Core.Database.MongoDB
 			return new List<string>(Pages.Select(p => p.Tags));
 		}
 
-		public Page GetPageByTitle(string title)
+	    public IEnumerable<string> AllTeams()
+	    {
+            return new List<string>(Pages.Select(p => p.Teams));
+	    }
+
+	    public Page GetPageByTitle(string title)
 		{
 			if (string.IsNullOrEmpty(title))
 				return null;

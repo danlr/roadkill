@@ -333,6 +333,11 @@ namespace Roadkill.Core.Database.LightSpeed
 			return new List<string>(Pages.Select(p => p.Tags));
 		}
 
+        public IEnumerable<string> AllTeams()
+		{
+			return new List<string>(Pages.Select(p => p.Teams));
+		}
+
 		public void DeleteAllPages()
 		{
 			UnitOfWork.Remove(new Query(typeof(PageEntity)));

@@ -37,7 +37,12 @@ namespace Roadkill.Tests.Unit
 
 		#region IRepository Members
 
-		public void DeletePage(Page page)
+	    public IEnumerable<string> AllTeams()
+	    {
+            return Pages.Select(x => x.Teams);
+	    }
+
+	    public void DeletePage(Page page)
 		{
 			Pages.Remove(page);
 		}
