@@ -139,7 +139,7 @@ namespace Roadkill.Core.Services
 					}
 				}
 
-				return pageModels;
+				return pageModels.Where(m => !m.Teams.Any() || m.Teams.Any(t => _context.HasAccess(t)));
 			}
 			catch (DatabaseException ex)
 			{
